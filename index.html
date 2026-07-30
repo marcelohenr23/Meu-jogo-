@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jogo de Luta 3D</title>
     <style>
         body {
@@ -11,100 +11,144 @@
             background: #111;
             font-family: Arial, sans-serif;
             touch-action: none;
+            user-select: none;
         }
+        /* Layout dos Controles na Tela */
         #ui {
             position: absolute;
             bottom: 20px;
             width: 100%;
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
             z-index: 10;
         }
+        .control-group {
+            display: flex;
+            gap: 10px;
+        }
         .btn {
-            background: rgba(255, 0, 0, 0.7);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
-            border: none;
-            padding: 15px 25px;
-            font-size: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            width: 65px;
+            height: 65px;
+            font-size: 22px;
             font-weight: bold;
-            border-radius: 10px;
+            border-radius: 50%;
             outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
         }
         .btn:active {
-            background: rgba(200, 0, 0, 1);
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+        .btn-action {
+            background: rgba(255, 0, 0, 0.6);
+            border-color: rgba(255, 0, 0, 0.9);
+            border-radius: 15px;
+            width: 75px;
+            height: 65px;
+            font-size: 14px;
+        }
+        .btn-action:active {
+            background: rgba(255, 0, 0, 0.9);
         }
     </style>
 </head>
 <body>
 
     <div id="ui">
-        <button class="btn" onclick="moverEsquerda()">⬅️</button>
-        <button class="btn" onclick="atacar()">🥊 SOCO</button>
-        <button class="btn" onclick="moverDireita()">➡️</button>
+        <!-- Grupo Esquerdo: Movimentação -->
+        <div class="control-group">
+            <button class="btn" onclick="moverEsquerda()">⬅️</button>
+            <button class="btn" onclick="moverDireita()">➡️</button>
+        </div>
+
+        <!-- Grupo Direito: Golpes -->
+        <div class="control-group">
+            <button class="btn btn-action" onclick="socar()">🥊 SOCO</button>
+            <button class="btn btn-action" onclick="chutar()">🦵 CHUTE</button>
+        </div>
     </div>
 
-    <!-- Importando o Three.js para renderizar o 3D -->
+    <!-- Importando o Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Configuração Inicial do Mundo 3D
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Luz do cenário (estilo arena de luta)
+        // Luz do cenário
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(0, 10, 10);
         scene.add(light);
         scene.add(new THREE.AmbientLight(0x404040));
 
-        // Criando o Chão da Arena
+        // Chão da Arena
         const floorGeometry = new THREE.PlaneGeometry(20, 10);
-        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -1;
         scene.add(floor);
 
-        // Criando o Lutador 1 (Player)
+        // Lutador 1 (Player - Vermelho)
         const playerGeometry = new THREE.BoxGeometry(1, 2, 0.5);
-        const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0044 });
         const player = new THREE.Mesh(playerGeometry, playerMaterial);
         player.position.set(-3, 0, 0);
         scene.add(player);
 
-        // Criando o Lutador 2 (Oponente)
-        const enemyMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+        // Lutador 2 (Inimigo - Azul)
+        const enemyMaterial = new THREE.MeshStandardMaterial({ color: 0x0066ff });
         const enemy = new THREE.Mesh(playerGeometry, enemyMaterial);
         enemy.position.set(3, 0, 0);
         scene.add(enemy);
 
         camera.position.z = 7;
 
-        // Funções de Controle
+        // Funções de Movimento e Combate
         function moverEsquerda() {
-            player.position.x -= 0.5;
+            if (player.position.x > -8) player.position.x -= 0.4;
         }
 
         function moverDireita() {
-            player.position.x += 0.5;
+            if (player.position.x < enemy.position.x - 1) player.position.x += 0.4;
         }
 
-        function atacar() {
-            // Efeito visual simples de soco (gira o boneco rapidamente)
-            player.rotation.y += 0.5;
-            setTimeout(() => { player.rotation.y = 0; }, 150);
+        function socar() {
+            // Animação rápida de soco para frente
+            player.position.z += 0.5;
+            player.rotation.z = -0.2;
+            setTimeout(() => { 
+                player.position.z -= 0.5; 
+                player.rotation.z = 0;
+            }, 120);
         }
 
-        // Loop de Animação do Jogo
+        function chutar() {
+            // Animação de chute (inclina para o lado)
+            player.rotation.y += 0.8;
+            setTimeout(() => { 
+                player.rotation.y = 0; 
+            }, 150);
+        }
+
+        // Loop de Renderização
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
         animate();
 
-        // Ajustar tela se girar o celular
+        // Responsividade para celular
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
